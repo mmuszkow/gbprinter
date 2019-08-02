@@ -105,7 +105,7 @@ static const char KEYB_LOWER[4][12] = {
 static UINT8 keyb_is_upper = 1;
 
 // position of selection cursor on screen in pixels
-// visible screen starts at 
+// visible screen starts at (40, 128) 
 static UINT8 cursor_x = 40, cursor_y = 128;
 
 static const UINT8 CURSORS[32] = {
@@ -212,7 +212,6 @@ void main(void) {
 
     clear(); 
     while(1) {
-        __asm__("halt");
         keys = joypad();
         if((keys & J_UP) && cursor_y > 128) {
             cursor_y -= 8;
@@ -286,7 +285,7 @@ void main(void) {
             enable_interrupts();
         }
         waitpadup();
-        __asm__("halt");
+        __asm__("halt"); // power saving mode
     }
 }
 
