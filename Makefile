@@ -1,14 +1,30 @@
-BIN=../gbdk-n/bin
-OBJ=./obj
+# If you move this project you can change the directory
+# to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
+ifndef GBDK_HOME
+	GBDK_HOME = ../gbdk/
+endif
+
+LCC = $(GBDK_HOME)bin/lcc -Wa-l -Wl-m -Wl-j
+
+BINS = print.gb
+
+# GBDK_DEBUG = ON
+ifdef GBDK_DEBUG
+	LCCFLAGS += -debug -v
+endif
 
 
+all:	$(BINS)
 
-build:
-	mkdir -p $(OBJ)
-	$(BIN)/gbdk-n-compile.sh print.c -o $(OBJ)/print.rel
-	$(BIN)/gbdk-n-link.sh $(OBJ)/print.rel -o $(OBJ)/print.ihx
-	$(BIN)/gbdk-n-make-rom.sh $(OBJ)/print.ihx print.gb
+compile.bat: Makefile
+	@echo "REM Automatically generated from Makefile" > compile.bat
+	@make -sn | sed y/\\//\\\\/ | sed s/mkdir\ -p\/mkdir\/ | grep -v make >> compile.bat
+
+# Compile and link single file in one pass
+%.gb:	%.c
+	$(LCC) $(LCCFLAGS) -o $@ $<
+	rgbfix -v -p 0xff -m 0 -j -l 0x33 -t "PRINT" -n 0 $(BINS)
 
 clean:
-	rm -rf $(OBJ)
-	rm -f print.gb
+	rm -f *.o *.lst *.map *.gb *~ *.rel *.cdb *.ihx *.lnk *.sym *.asm *.noi *.rst
+

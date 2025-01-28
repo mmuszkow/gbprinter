@@ -11,6 +11,7 @@
 *.ilk
 *.map
 *.exp
+*.noi
 
 # Precompiled Headers
 *.gch
@@ -46,6 +47,7 @@
 *.mod*
 *.cmd
 .tmp_versions/
+obj/
 modules.order
 Module.symvers
 Mkfile.old
