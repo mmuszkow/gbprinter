@@ -5,11 +5,14 @@
 #define PRINTER_STATUS_CHECKSUM_INVALID 0x01
 #define PRINTER_STATUS_PRINTING         0x02
 #define PRINTER_STATUS_DATA_FULL        0x04
-#define PRINTER_STATUS_READY_TO_PRINT   0x08
+#define PRINTER_STATUS_UNPROCESSED_DATA 0x08
 #define PRINTER_STATUS_PACKET_ERROR     0x10
 #define PRINTER_STATUS_PAPER_JAM        0x20
 #define PRINTER_STATUS_OTHER_ERROR      0x40
 #define PRINTER_STATUS_LOW_BATTERY      0x80
+
+// statuses considered an error
+#define PRINTER_STATUS_ERROR            0b01110101
 
 #define COMPRESSION_NONE                0x00
 #define COMPRESSION_RLE                 0x01
@@ -103,10 +106,11 @@ UINT16 rle_compress(const UINT8 *in_buf, UINT16 in_len, UINT8* out_buf) {
 }
 
 UINT8 serial_send_recv(UINT8 b) {
+    UINT16 timeout = 65000; // ~100ms
     SB_REG = b;
     SC_REG = 0x81;
-    while(SC_REG & 0x80);
-    return SB_REG;
+    while(--timeout && (SC_REG & 0x80));
+    return timeout ? SB_REG : 0xFF;
 }
 
 UINT8 printer_cmd(UINT8* cmd) {
@@ -119,7 +123,7 @@ UINT8 printer_cmd(UINT8* cmd) {
     if((serial_send_recv(0) & 0xF0) != 0x80)
         return 0xFF;
 
-    // status, should return 0x00
+    // status
     return serial_send_recv(0);
 }
 
@@ -155,7 +159,7 @@ UINT8 printer_data(UINT16 len, UINT8* data, UINT8 compression) {
 
     // keepalive, should return 0x80 or 0x81
     if((serial_send_recv(0) & 0xF0) != 0x80)
-        return 0x40; // other error code, to indicate error
+        return 0xFF;
 
     // status, should return 0x00
     return serial_send_recv(0);
@@ -214,14 +218,37 @@ INT8 get_lines_count(void) {
     return 0;
 }
 
+void show_hex(UINT8 val) {
+    UINT8 hi = val >> 4;
+    UINT8 lo = val & 0xF;
+    wait_vbl_done();
+    if(hi < 10)
+        set_bkg_tile_xy(0, 15, '0'+hi);
+    else
+        set_bkg_tile_xy(0, 15, 'A'+hi-10);
+    if(lo < 10)
+        set_bkg_tile_xy(1, 15, '0'+lo);
+    else
+        set_bkg_tile_xy(1, 15, 'A'+lo-10);
+}
+
 INT8 print(void) {
-    UINT8 line, col, lines, i, status;
-    UINT8 pix[640], *tmp1;
+    UINT8 line, col, lines, i;
+    UINT8 pix[640], *tmp1, status;
+    UINT16 timeout, delay;
     const UINT8* tmp2;
 
+    wait_vbl_done();
+    set_bkg_tiles(0, 14, 2, 1, "  ");
+    set_bkg_tiles(0, 15, 2, 1, "  ");
+    set_bkg_tile_xy(0, 14, 'P');
+
     // clean printer RAM
-    if(printer_cmd(PRINTER_INIT) != 0x00)
+    status = printer_cmd(PRINTER_INIT);
+    if(status != 0x00) {
+        show_hex(status);
         return -1;
+    }
 
     // the number of lines must be even to get 640 bytes
     lines = ((get_lines_count() >> 1) + 1) << 1;
@@ -239,29 +266,51 @@ INT8 print(void) {
                 *tmp1++ = *tmp2++;
         }
 
-        // only printing ready and low battery accepted
-        if((status = (printer_data(640, pix, COMPRESSION_NONE) & 0b01110111)) != 0x00)
+        // send data
+        status = printer_data(640, pix, COMPRESSION_NONE);
+        if(status & PRINTER_STATUS_ERROR) {
+            show_hex(status);
             return -2;
+        }
+
+        // check for errors, Pokemon Yellow does that
+        status = printer_cmd(PRINTER_STATUS);
+        if(status & PRINTER_STATUS_ERROR) {
+            show_hex(status);
+            return -3;
+        }
     }
 
-    // ask status, expect ready to print
-    if((printer_cmd(PRINTER_STATUS) & PRINTER_STATUS_READY_TO_PRINT) != PRINTER_STATUS_READY_TO_PRINT)
-        return -3;
-
-    // send "EOF", status should be still ready to print
-    if((printer_data(0, (UINT8*) 0, COMPRESSION_NONE) & PRINTER_STATUS_READY_TO_PRINT) != PRINTER_STATUS_READY_TO_PRINT)
+    // send "EOF"
+    status = printer_data(0, (UINT8*) 0, COMPRESSION_NONE);
+    if(status & PRINTER_STATUS_ERROR) {
+        show_hex(status);
         return -4;
+    }
 
-    // send start print command, status should be still ready to print
-    if((printer_cmd(PRINTER_PRINT) & PRINTER_STATUS_READY_TO_PRINT) != PRINTER_STATUS_READY_TO_PRINT)
+    // perform final check for errors
+    status = printer_cmd(PRINTER_STATUS);
+    if(status & PRINTER_STATUS_ERROR) {
+        show_hex(status);
         return -5;
+    }
 
-    // keep checking until printing in progress bit clear
-    while((printer_cmd(PRINTER_STATUS) & PRINTER_STATUS_PRINTING) == PRINTER_STATUS_PRINTING);
+    // send start print command & keep checking until printing in progress bit clear
+    printer_cmd(PRINTER_PRINT);
+    timeout = 20000; // ~30secs
+    while(--timeout) {
+        status = printer_cmd(PRINTER_STATUS);
+        if(!(status & PRINTER_STATUS_PRINTING))
+            break;
 
-    // final check for status
-    if((printer_cmd(PRINTER_STATUS) & PRINTER_STATUS_DATA_FULL) != PRINTER_STATUS_DATA_FULL)
+        // ~1.5ms delay
+        delay = 1000;
+        while(--delay);
+    }
+    if(timeout == 0) {
+        show_hex(status);
         return -6;
+    }
 
     return 0;
 }
@@ -358,6 +407,7 @@ void main(void) {
                 set_bkg_tile_xy(1, 14, '0'-status);
             } else {
                 set_bkg_tiles(0, 14, 2, 1, "  ");
+                set_bkg_tiles(0, 15, 2, 1, "  ");
                 clear();
             }
         }
