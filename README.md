@@ -1,12 +1,6 @@
 # gbprinter
 
-Game Boy Printer test ROM
-
-![alt text](https://raw.githubusercontent.com/mmuszkow/gbprinter/master/screenshots/rom.png)
-![alt text](https://raw.githubusercontent.com/mmuszkow/gbprinter/master/screenshots/print.png)
-![alt text](https://raw.githubusercontent.com/mmuszkow/gbprinter/master/screenshots/test_pattern.png)
-
-Tested on SameBoy & mGBA, not on real hardware - feel free to contact me if you would like to donate it ;)
+Game Boy Printer test ROM. Tested on SameBoy & mGBA, not on real hardware - feel free to contact me if you would like to donate it ;)
 
 # Control keys
 
@@ -30,4 +24,10 @@ On successfully completed print the preview screen will be cleared.
 
 The protocol is well documented at [https://gbdev.io/pandocs/Gameboy_Printer.html](https://gbdev.io/pandocs/Gameboy_Printer.html).
 RLE compression is disabled as most of the emulators don't support it.
+
+# Screenshots
+
+![alt text](https://raw.githubusercontent.com/mmuszkow/gbprinter/master/screenshots/rom.png)  
+![alt text](https://raw.githubusercontent.com/mmuszkow/gbprinter/master/screenshots/print.png)  
+![alt text](https://raw.githubusercontent.com/mmuszkow/gbprinter/master/screenshots/test_pattern.png)
 
