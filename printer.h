@@ -15,6 +15,7 @@
 
 // statuses considered an error
 #define PRINTER_STATUS_ERROR            0b01110101
+#define PRINTER_STATUS_ERROR_EOF        0b01110001
 
 #define COMPRESSION_NONE                0x00
 #define COMPRESSION_RLE                 0x01

@@ -242,7 +242,7 @@ INT8 print(char text[14][20]) {
 
     // perform final check for errors
     status = printer_cmd(PRINTER_STATUS);
-    if(status & PRINTER_STATUS_ERROR) {
+    if(status & PRINTER_STATUS_ERROR_EOF) {
         show_hex(status);
         return -5;
     }
