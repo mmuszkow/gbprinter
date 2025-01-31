@@ -21,7 +21,7 @@ compile.bat: Makefile
 # Compile and link single file in one pass
 %.gb: main.c printer.c pattern.c
 	$(LCC) $(LCCFLAGS) -o $@ $^
-	rgbfix -flhg -j -m 0 -n 2 -O -p 0xFF -r 0 -t "PRINT" $(BINS)
+	rgbfix --color-compatible --fix-spec lhg --non-japanese --mbc-type 0 --rom-version 2 --pad-value 0xFF --ram-size 0 --game-id "MUH" --title "PRINT" --overwrite $(BINS)
 
 clean:
 	rm -f *.o *.lst *.map *.gb *~ *.rel *.cdb *.ihx *.lnk *.sym *.asm *.noi *.rst

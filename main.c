@@ -1,4 +1,5 @@
 #include <gb/gb.h>
+#include <gb/cgb.h>
 #include <gb/drawing.h>
 #include "printer.h"
 #include "font.h"
@@ -53,6 +54,10 @@ void main(void) {
     DISPLAY_OFF;
     set_bkg_data(0x00, 0x80, FONT);
     set_bkg_tiles(4, 14, 12, 4, (char*) KEYB_UPPER);
+    if(_cpu == CGB_TYPE) {
+        set_bkg_palette(0, 1, CGB_TILE_PALETTE);
+        set_sprite_palette(0, 1, CGB_SPRITE_PALETTE);
+    }
 
     SPRITES_8x8;
     set_sprite_data(0, 2, CURSORS);
@@ -64,6 +69,7 @@ void main(void) {
     SHOW_BKG;
     SHOW_SPRITES;
     DISPLAY_ON;
+
     enable_interrupts();
 
     clear(); 
