@@ -1,5 +1,3 @@
-# If you move this project you can change the directory
-# to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
 ifndef GBDK_HOME
 	GBDK_HOME = ../gbdk/
 endif
@@ -21,9 +19,9 @@ compile.bat: Makefile
 	@make -sn | sed y/\\//\\\\/ | sed s/mkdir\ -p\/mkdir\/ | grep -v make >> compile.bat
 
 # Compile and link single file in one pass
-%.gb:	%.c
-	$(LCC) $(LCCFLAGS) -o $@ $<
-	rgbfix -v -p 0xff -m 0 -j -l 0x33 -t "PRINT" -n 0 $(BINS)
+%.gb: main.c printer.c pattern.c
+	$(LCC) $(LCCFLAGS) -o $@ $^
+	rgbfix -flhg -j -m 0 -n 2 -O -p 0xFF -r 0 -t "PRINT" $(BINS)
 
 clean:
 	rm -f *.o *.lst *.map *.gb *~ *.rel *.cdb *.ihx *.lnk *.sym *.asm *.noi *.rst
