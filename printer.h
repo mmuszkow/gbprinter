@@ -3,6 +3,13 @@
 
 #include <gb/gb.h>
 
+// commands
+#define PRINTER_CMD_INIT   0x01
+#define PRINTER_CMD_PRINT  0x02
+#define PRINTER_CMD_DATA   0x04
+#define PRINTER_CMD_BREAK  0x08
+#define PRINTER_CMD_STATUS 0x0F
+
 // status flags
 #define PRINTER_STATUS_CHECKSUM_INVALID 0x01
 #define PRINTER_STATUS_PRINTING         0x02

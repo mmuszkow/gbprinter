@@ -6,7 +6,7 @@
 static const UINT8 PRINTER_INIT[] = {
     8,          // length
     0x88, 0x33, // magic
-    0x01,       // command
+    PRINTER_CMD_INIT, // command
     0x00,       // compression
     0x00, 0x00, // data length
                 // no data
@@ -16,21 +16,36 @@ static const UINT8 PRINTER_INIT[] = {
 static const UINT8 PRINTER_STATUS[] = {
     8,          // length
     0x88, 0x33, // magic
-    0x0F,       // command
+    PRINTER_CMD_STATUS, // command
     0x00,       // compression
     0x00, 0x00, // data length
                 // no data
     0x0F, 0x00  // checksum
 };
 
+// about parameters:
+// - number of sheets: 0 = line feed only, 1-255 otherwise
+// - margin: higher 4 bits are the number of feeds before, lower after
+// - palette: 4x2-bit colors starting from hi bit
+// - exposure: 00-7F, 00 is -25%, 40 is 0%, 7F is +25%
 static const UINT8 PRINTER_PRINT[] = {
     12,         // length
     0x88, 0x33, // magic
-    0x02,       // command
+    PRINTER_CMD_PRINT, // command
     0x00,       // compression
     0x04, 0x00, // data length
-    0x01, 0x13, 0xE4, 0x40, // unknown, margins, palette, exposure
+    0x01, 0x13, 0xE4, 0x40, // number of sheets, front/back margin, palette, exposure
     0x3E, 0x01  // checksum
+};
+
+// unused by this ROM
+static const UINT8 PRINTER_BREAK[] = {
+    8,          // length,
+    0x88, 0x33, // magic
+    PRINTER_CMD_BREAK, // command
+    0x00,       // compression
+    0x00, 0x00, // data length
+    0x08, 0x00  // checksum
 };
 
 static UINT16 rle_compress(const UINT8 *in_buf, UINT16 in_len, UINT8* out_buf) {
