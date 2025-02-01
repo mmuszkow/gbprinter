@@ -8,17 +8,20 @@
 static char text[14][20], c;
 static UINT8 text_x = 0, text_y = 0;
 
+// symbol used for newline
+#define NL 0x1F
+
 static const char KEYB_UPPER[4][12] = {
     { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=' },
     { 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']' },
     { 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '\\' },
-    { 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', ' ', '\n' }
+    { 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', ' ', NL }
 };
 static const char KEYB_LOWER[4][12] = {
     { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+' },
     { 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '{', '}' },
     { 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ':', '"', '|' },
-    { 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?', ' ', '\n' }
+    { 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?', ' ', NL }
 };
 static UINT8 keyb_is_upper = 1;
 
@@ -96,7 +99,7 @@ void main(void) {
                 else
                     c = KEYB_LOWER[(cursor_y - 128) >> 3][(cursor_x - 40) >> 3];
                 
-                if(c != '\n') {
+                if(c != NL) {
                     text[text_y][text_x] = c;
                     wait_vbl_done();
                     set_bkg_tiles(text_x, text_y, 1, 1, &c);
